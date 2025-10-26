@@ -14,4 +14,6 @@ ENV NEO4J_dbms_security_procedures_unrestricted='apoc.*'
 ENV NEO4J_dbms_default__listen__address=0.0.0.0
 
 # Start Neo4j: dynamically export HTTP port for Railway, run auto-import in background
-CMD ["bash","-lc","export NEO4J_server_http_listen__address=0.0.0.0:${PORT} && /var/lib/neo4j/scripts/auto_import.sh & exec /var/lib/neo4j/bin/neo4j console"]
+COPY ./neo4j-newDB/start.sh /var/lib/neo4j/scripts/start.sh
+RUN chmod +x /var/lib/neo4j/scripts/start.sh
+CMD ["/var/lib/neo4j/scripts/start.sh"]
