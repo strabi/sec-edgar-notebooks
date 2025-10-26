@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  neo4j-api:
+    build:
+      context: ./neo4j-fastapi
+    environment:
+      NEO4J_BOLT_URL: ${NEO4J_BOLT_URL}
+      NEO4J_USER: ${NEO4J_USER:-neo4j}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      MAX_ROWS: ${MAX_ROWS:-1000}
+    ports:
+      - "8088:8088"
+    restart: unless-stopped
