@@ -18,4 +18,6 @@ VOLUME ["/data"]
 # Start Neo4j but run the auto-import helper in background which will wait for the DB to be ready
 # and then run the import if it hasn't been applied yet.
 # The official image provides an entrypoint; we pass the CLI argument `neo4j` to start the DB.
-CMD ["bash", "-lc", "/var/lib/neo4j/scripts/auto_import.sh & exec /var/lib/neo4j/bin/neo4j console"]
+CMD ["bash", "-lc", "export NEO4J_server_http_listen__address=0.0.0.0:${PORT} && \
+/var/lib/neo4j/scripts/auto_import.sh & exec /var/lib/neo4j/bin/neo4j console"]
+
