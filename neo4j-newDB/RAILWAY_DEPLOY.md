@@ -23,9 +23,10 @@ Screenshot tip: In the build settings pane, set the Dockerfile path exactly as a
 3) Set environment variables (use Railway secrets)
 - In the Environment / Variables section add:
   - `NEO4J_AUTH` = `neo4j/<strong_password>` (replace `<strong_password>`)
-  - `NEO4J_PLUGINS` = `["apoc"]`
-  - `NEO4J_dbms_security_procedures_unrestricted` = `apoc.*`
-  - Optional (to disable auto-import): `SKIP_AUTO_IMPORT` = `1`
+- `NEO4J_PLUGINS` = `["apoc"]`
+- `NEO4J_dbms_security_procedures_unrestricted` = `apoc.*`
+- Optional (to disable auto-import): `SKIP_AUTO_IMPORT` = `1`
+- Optional (to import a different file baked into the image): `CYPHER_IMPORT_FILE` = `/var/lib/neo4j/import/export_10_combined.cypher`
 
 Screenshot tip: Use the Railway UI to mark sensitive values as secret; don't commit them to Git.
 

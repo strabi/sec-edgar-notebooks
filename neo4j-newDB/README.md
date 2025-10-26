@@ -4,7 +4,7 @@ This folder contains artifacts to run a reproducible Neo4j instance with the 10%
 
 What's included
 - `Dockerfile` — builds an image based on `neo4j:latest` and includes `export_10_combined.cypher` in `/var/lib/neo4j/import/`.
-- `auto_import.sh` — runs on container start and will automatically apply the cypher import once if the DB is empty.
+- `auto_import.sh` — runs on container start and will automatically apply the cypher import once if the DB is empty. Set `CYPHER_IMPORT_FILE` to point at a different `.cypher` file if needed.
 - `import_and_start.ps1` — PowerShell helper that recreates a clean local container and runs the import (good for Windows devs).
 - `build_and_push.ps1` — helper to build and push the image to a registry.
 
@@ -46,7 +46,8 @@ Railway deployment (build from repo Dockerfile)
    - `NEO4J_AUTH` — e.g. `neo4j/<strong_password>` (use secrets in Railway)
    - `NEO4J_PLUGINS` — `["apoc"]`
    - `NEO4J_dbms_security_procedures_unrestricted` — `apoc.*`
-   - Optional: `SKIP_AUTO_IMPORT=1` (to disable automatic import)
+- Optional: `SKIP_AUTO_IMPORT=1` (to disable automatic import)
+- Optional: `CYPHER_IMPORT_FILE=/var/lib/neo4j/import/your_file.cypher` (override the default import file baked into the image)
 4. Deploy the service. By default the image will run auto-import on first boot (unless `SKIP_AUTO_IMPORT=1` is set).
 
 Notes about Railway and long-running imports
