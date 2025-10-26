@@ -1,6 +1,7 @@
 Neo4j Docker quickstart for sec-edgar-notebooks
 
-the /browser can show data like this ![Browser Visualization](Screenshot 2025-10-26 171207.png)
+the /browser can show data like this
+![Browser Visualization](Screenshot 2025-10-26 171207.png)
 
 
 This folder contains instructions to run the Neo4j database used by the project using Docker Compose.
