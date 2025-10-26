@@ -1,0 +1,8 @@
+# Reduce Railway build context size; keep the dump we need.
+logs
+logs.txt
+neo4jdata/
+notebooks/
+venv/
+.venv/
+.venv*/

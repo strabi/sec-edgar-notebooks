@@ -45,6 +45,10 @@ The form is divided into sections, and each section is split into chunks. The ch
 
 *Note*: If you are using Neo4j Aura, the query interface does not support client-side commands in multi-statement scripts. So, you should first run the `:params` statement by itself to set query parameters. Then, run the rest of the script.
 
+## Railway Deployment
+
+For running the pre-built knowledge graph on Railway, use the custom assets in `railway/`. The Dockerfile restores `data/sample/neo4j.dump` on first start and the accompanying README walks through the required environment variables and Railway settings.
+
 ## Knowledge Graph Construction - step-by-step
 
 To understand all the details about how the knowledge graph is constructed, follow the step-by-step guide in the [kg-construction](notebooks/kg-construction) directory.
