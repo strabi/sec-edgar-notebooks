@@ -8,10 +8,24 @@ set -euo pipefail
 export NEO4J_server_http_listen__address="0.0.0.0:${PORT}"
 export NEO4J_server_default__listen__address="0.0.0.0"
 
-# Sensible memory caps (override in Railway vars if you want)
-export NEO4J_server_memory_heap_initial__size="${NEO4J_server_memory_heap_initial__size:-256m}"
-export NEO4J_server_memory_heap_max__size="${NEO4J_server_memory_heap_max__size:-512m}"
-export NEO4J_server_memory_pagecache_size="${NEO4J_server_memory_pagecache_size:-256m}"
+# Sensible memory caps (override in Railway vars if you want).
+# Neo4j 5.x expects underscores in config keys to be doubled when
+# translated to environment variables. Support both the correct names and
+# the older single-underscore spellings we previously used so existing
+# Railway variables continue to work.
+initial_heap_size="${NEO4J_server_memory_heap__initial__size:-${NEO4J_server_memory_heap_initial__size:-256m}}"
+max_heap_size="${NEO4J_server_memory_heap__max__size:-${NEO4J_server_memory_heap_max__size:-512m}}"
+pagecache_size="${NEO4J_server_memory_pagecache__size:-${NEO4J_server_memory_pagecache_size:-256m}}"
+
+export NEO4J_server_memory_heap__initial__size="$initial_heap_size"
+export NEO4J_server_memory_heap__max__size="$max_heap_size"
+export NEO4J_server_memory_pagecache__size="$pagecache_size"
+
+# Avoid leaking the legacy env vars into the process; Neo4j treats unknown
+# NEO4J_* vars as configuration and will warn/fail if the key is invalid.
+unset NEO4J_server_memory_heap_initial__size 2>/dev/null || true
+unset NEO4J_server_memory_heap_max__size 2>/dev/null || true
+unset NEO4J_server_memory_pagecache_size 2>/dev/null || true
 
 # Optional: turn off usage reporting
 export NEO4J_dbms_usage__report_enabled="${NEO4J_dbms_usage__report_enabled:-false}"
