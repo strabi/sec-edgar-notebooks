@@ -38,3 +38,6 @@ venv/
 L5/lamini_docs_3_steps/*
 temp/*
 */lamini_docs_processed.jsonl
+
+# Neo4j local data (do not commit DB files)
+neo4jdata/
