@@ -22,7 +22,8 @@ fi
 USER=$(echo "$NEO4J_AUTH" | cut -d'/' -f1)
 PASS=$(echo "$NEO4J_AUTH" | cut -d'/' -f2-)
 
-CYPHER_FILE="/var/lib/neo4j/import/export_10_combined.cypher"
+CYPHER_FILE=${CYPHER_IMPORT_FILE:-/var/lib/neo4j/import/export_10_combined.cypher}
+echo "$LOG_PREFIX using cypher file at $CYPHER_FILE"
 
 wait_for_neo4j() {
   echo "$LOG_PREFIX waiting for cypher-shell to accept connections..."
