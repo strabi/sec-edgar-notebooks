@@ -13,6 +13,8 @@ ENV NEO4J_AUTH=neo4j/password
 ENV NEO4J_PLUGINS='["apoc"]'
 ENV NEO4J_dbms_security_procedures_unrestricted='apoc.*'
 
+VOLUME ["/data"]
+
 # Start Neo4j but run the auto-import helper in background which will wait for the DB to be ready
 # and then run the import if it hasn't been applied yet.
 # The official image provides an entrypoint; we pass the CLI argument `neo4j` to start the DB.
