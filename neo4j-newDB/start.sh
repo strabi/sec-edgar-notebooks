@@ -5,7 +5,15 @@ set -euo pipefail
 : "${PORT:=7474}"
 
 # Bind HTTP to Railway's port and let everything listen on all interfaces
-export NEO4J_server_http_listen__address="0.0.0.0:${PORT}"
+# NOTE: Neo4j translates `.` in config keys to double underscores when reading
+# from environment variables (e.g. `server.http.listen_address` →
+# `NEO4J_server_http__listen__address`). We previously missed the double
+# underscore between `http` and `listen`, which meant Neo4j interpreted the
+# value as part of the next environment variable during parsing and failed to
+# start (showing an address like `"0.0.0.0"NEO4J_server_memory_heap_initial__size=256m:7474`).
+# Setting the correctly named variable ensures the HTTP connector binds
+# properly on Railway's assigned port.
+export NEO4J_server_http__listen__address="0.0.0.0:${PORT}"
 export NEO4J_server_default__listen__address="0.0.0.0"
 
 # Sensible memory caps (override in Railway vars if you want).
@@ -26,6 +34,7 @@ export NEO4J_server_memory_pagecache__size="$pagecache_size"
 unset NEO4J_server_memory_heap_initial__size 2>/dev/null || true
 unset NEO4J_server_memory_heap_max__size 2>/dev/null || true
 unset NEO4J_server_memory_pagecache_size 2>/dev/null || true
+unset NEO4J_server_http_listen__address 2>/dev/null || true
 
 # Optional: turn off usage reporting
 export NEO4J_dbms_usage__report_enabled="${NEO4J_dbms_usage__report_enabled:-false}"
