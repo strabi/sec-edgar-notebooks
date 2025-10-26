@@ -16,6 +16,19 @@ set -euo pipefail
 export NEO4J_server_http__listen__address="0.0.0.0:${PORT}"
 export NEO4J_server_default__listen__address="0.0.0.0"
 
+# Normalize bolt listen address env vars as well. Some deployments still set
+# the legacy `NEO4J_server_bolt_listen__address` (single underscore before
+# `listen`). If we forward that directly Neo4j will concatenate it with the
+# next environment variable during parsing and produce errors such as
+# `"0.0.0.0"NEO4J_server_memory_heap_initial__size=256m/<unresolved>:7687` when
+# binding the bolt connector. Prefer the correctly translated name but fall
+# back to the legacy one when present so existing Railway configs continue to
+# work without modification.
+bolt_listen_address="${NEO4J_server_bolt__listen__address:-${NEO4J_server_bolt_listen__address:-${NEO4J_server_bolt_listen_address:-}}}"
+if [[ -n "${bolt_listen_address}" ]]; then
+  export NEO4J_server_bolt__listen__address="${bolt_listen_address}"
+fi
+
 # Sensible memory caps (override in Railway vars if you want).
 # Neo4j 5.x expects underscores in config keys to be doubled when
 # translated to environment variables. Support both the correct names and
@@ -35,6 +48,8 @@ unset NEO4J_server_memory_heap_initial__size 2>/dev/null || true
 unset NEO4J_server_memory_heap_max__size 2>/dev/null || true
 unset NEO4J_server_memory_pagecache_size 2>/dev/null || true
 unset NEO4J_server_http_listen__address 2>/dev/null || true
+unset NEO4J_server_bolt_listen__address 2>/dev/null || true
+unset NEO4J_server_bolt_listen_address 2>/dev/null || true
 
 # Optional: turn off usage reporting
 export NEO4J_dbms_usage__report_enabled="${NEO4J_dbms_usage__report_enabled:-false}"
