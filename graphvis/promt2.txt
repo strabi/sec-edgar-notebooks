@@ -1,0 +1,45 @@
+Create a single-page 3D visualization UI using HTML + JavaScript.
+
+Purpose:
+Visualize graph data served from a FastAPI backend (/graph and /summary endpoints).
+
+Requirements:
+
+1. Use:
+   - 3d-force-graph (Three.js based)
+   - Minimal inline CSS and JS (no build step)
+   - Responsive full-screen canvas
+
+2. Layout:
+   - Main 3D scene filling viewport (`#scene`)
+   - Right control panel (fixed top-right)
+       • Mode selector (lineage / usage / domain)
+       • Focus type selector + text input
+       • Node size metric selector
+       • Link strength slider
+       • Buttons: Reload, Auto-Spin, Explain (summary)
+   - Left legend (fixed top-left) showing color keys per node type
+   - Bottom-left “Details” panel
+       • Appears on node click
+       • Shows node label, name, and properties
+   - Bottom-right “Impact Summary” panel
+       • Shows the /summary text response
+       • Close button to hide
+
+3. Functionality:
+   - Fetch graph JSON from /graph based on current mode and focus.
+   - Render with ForceGraph3D:
+       • Node color based on label
+       • Node size based on metric or degree
+       • Link opacity 0.35, directional particles enabled
+       • Smooth camera fly-to on node click
+   - Click node → show details panel.
+   - Click background → hide details.
+   - Click “Explain” → fetch /summary and show in summary panel.
+   - Toggle auto-spin (rotates camera slowly).
+   - Update link strength and node size interactively.
+   - Hard refresh loads default mode = lineage.
+
+4. Include all HTML, CSS, and JS in one file (index.html).
+
+Deliver a complete working `index.html` file ready to serve under `/static/` in FastAPI.

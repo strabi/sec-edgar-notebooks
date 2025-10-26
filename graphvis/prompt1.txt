@@ -1,0 +1,53 @@
+You are to create a FastAPI backend called `app.py` that serves graph data from a Neo4j database.
+
+Requirements:
+
+1. Use the official Neo4j Python driver.
+   - Connection should read from environment variables:
+     NEO4J_URI, NEO4J_USER, NEO4J_PASS
+   - Default to bolt://localhost:7687 if not set.
+
+2. Implement two endpoints:
+   ------------------------------------------------------------------
+   (a) GET /graph
+   ------------------------------------------------------------------
+   • Parameters:
+       - mode: "lineage", "usage", or "domain"
+       - focusType (optional)
+       - focus (optional)
+       - limit (default 500)
+   • Behavior:
+       - Run different Cypher queries depending on `mode`.
+         - lineage:  Column ← Field ← Endpoint ← App
+         - usage:    App → Endpoint → Field
+         - domain:   Fund → Account → Position → Security (+ NAV)
+       - If focusType/focus are provided, filter accordingly
+         (e.g., specific fund, endpoint, or field).
+       - Convert the Neo4j results into JSON with:
+           { "nodes": [...], "links": [...] }
+         Each node includes:
+           id, label, name, metric, props
+         Each link includes:
+           source, target, type
+       - Use helper functions to avoid duplicate nodes.
+
+   ------------------------------------------------------------------
+   (b) GET /summary
+   ------------------------------------------------------------------
+   • Runs the same query as /graph but only returns a text summary.
+   • Summarize:
+       - Node and link counts
+       - Distribution of labels (App, Field, etc.)
+       - Top 3 most connected nodes
+       - Suggestions depending on mode:
+           lineage → downstream impact
+           usage → busy endpoints
+           domain → NAV/position checks
+   • Return plain text (no JSON).
+
+3. The app should serve static HTML from `/static/index.html` at the root URL.
+
+4. Run using:
+      uvicorn app:app --host 0.0.0.0 --port 8080 --reload
+
+Deliver a full working `app.py` file implementing all this.

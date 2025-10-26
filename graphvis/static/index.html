@@ -1,0 +1,218 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>FNV GraphRAG Viz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    html,body,#scene{height:100%;margin:0;background:#0a0f1a;color:#cfe6ff;font-family:Inter,system-ui;}
+    .panel{position:fixed;top:12px;right:12px;background:#121826cc;border:1px solid #243045;border-radius:12px;padding:12px;backdrop-filter: blur(6px)}
+    .legend{position:fixed;left:12px;top:12px;background:#121826cc;border:1px solid #243045;border-radius:12px;padding:10px}
+    select,input,button{background:#0f1624;color:#cfe6ff;border:1px solid #2a3b55;border-radius:8px;padding:6px}
+  </style>
+</head>
+<body>
+<div id="scene"></div>
+
+<!-- Right controls -->
+<div class="panel">
+  <div><b>Visualization Mode</b></div>
+  <select id="mode">
+    <option value="filings">Filings (Company → Form → Chunks)</option>
+    <option value="holdings">Holdings (Manager → Company)</option>
+    <option value="sections">Sections (Chunk context)</option>
+  </select>
+
+  <div style="margin-top:10px"><b>Focus</b></div>
+  <select id="focusType">
+    <option value="">(none)</option>
+  </select>
+  <input id="focus" placeholder="Apple" style="width:220px; margin-top:6px"/>
+
+  <div style="margin-top:10px">
+    Node size:
+    <select id="sizeMetric">
+      <option value="metric">metric</option>
+      <option value="degree">degree</option>
+    </select>
+  </div>
+
+  <div style="margin-top:8px">
+    Link strength
+    <input id="linkStrength" type="range" min="0" max="1" step="0.02" value="0.5"/>
+  </div>
+
+  <div style="margin-top:10px">
+    <button id="reload">Reload</button>
+    <button id="spin">Auto-Spin</button>
+    <button id="explain">Explain (summary)</button>
+  </div>
+
+</div>
+
+<!-- Left legend -->
+<div class="legend">
+  <b>Legend</b><br/>
+  <span style="color:#34d399">Manager</span> •
+  <span style="color:#60a5fa">Company</span> •
+  <span style="color:#fbbf24">Form</span> •
+  <span style="color:#a78bfa">Chunk</span> •
+  <span style="color:#fb7185">RailwayMarker</span>
+</div>
+
+<!-- Bottom-right summary panel -->
+<div id="summary"
+     style="position:fixed; right:12px; bottom:12px; width:420px;
+            max-height:46%; overflow:auto;
+            background:#121826cc; border:1px solid #243045;
+            border-radius:12px; padding:10px; display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div style="font-weight:700;">Impact Summary</div>
+    <button onclick="document.getElementById('summary').style.display='none'"
+            style="background:#0f1624;color:#cfe6ff;border:1px solid #2a3b55;border-radius:6px;padding:2px 6px">
+      Close
+    </button>
+  </div>
+  <div id="summaryContent" style="font-size:13px; line-height:1.25; white-space:pre-wrap;"></div>
+</div>
+
+
+<!-- Bottom-left node details -->
+<div id="details"
+     style="position:fixed; left:12px; bottom:12px; width:320px;
+            max-height:46%; overflow:auto;
+            background:#121826cc; border:1px solid #243045;
+            border-radius:12px; padding:10px; display:none;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+    <div style="font-weight:700;">Details</div>
+    <button onclick="details.style.display='none'"
+            style="background:#0f1624;color:#cfe6ff;border:1px solid #2a3b55;border-radius:6px;padding:2px 6px">
+      Close
+    </button>
+  </div>
+  <div id="detailsContent" style="font-size:13px; line-height:1.25; word-break:break-word;"></div>
+</div>
+
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script src="https://unpkg.com/3d-force-graph"></script>
+<script>
+const colorByLabel = l => ({
+  Manager:'#34d399', Company:'#60a5fa', Form:'#fbbf24', Chunk:'#a78bfa',
+  KnowledgeGraph:'#f472b6', RailwayMarker:'#fb7185'
+}[l] || '#9ca3af');
+
+const details = document.getElementById('details');
+const detailsContent = document.getElementById('detailsContent');
+const modeSel = document.getElementById('mode');
+const focusSel = document.getElementById('focusType');
+const focusInp = document.getElementById('focus');
+const summaryEl = document.getElementById('summary');
+const summaryContent = document.getElementById('summaryContent');
+  
+function setFocusOptions(){
+  const m = modeSel.value;
+  focusSel.innerHTML = '';
+  const opt = (v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;return o;}
+  focusSel.append(opt('','(none)'));
+  if (m==='filings'){
+    focusSel.append(opt('company','company (name / CUSIP6)'));
+    focusSel.append(opt('form','form id'));
+    focusSel.append(opt('cusip','CUSIP6'));
+    focusInp.placeholder='Apple';
+  }
+  if (m==='holdings'){
+    focusSel.append(opt('manager','manager (name / CIK)'));
+    focusSel.append(opt('company','company (name / CUSIP6)'));
+    focusSel.append(opt('cusip','CUSIP6'));
+    focusInp.placeholder='BlackRock';
+  }
+  if (m==='sections'){
+    focusSel.append(opt('form','form id'));
+    focusSel.append(opt('company','company (name / CUSIP6)'));
+    focusSel.append(opt('item','section item (e.g., item1a)'));
+    focusSel.append(opt('chunk','chunk id'));
+    focusInp.placeholder='0000107140-23-000092-item1a-chunk0000';
+  }
+}
+setFocusOptions();
+
+const Graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('scene'))
+  .nodeLabel(n => `${n.label}: ${n.name}`)
+  .nodeAutoColorBy('label')
+  .linkOpacity(0.35)
+  .linkDirectionalParticles(2)
+  .linkDirectionalParticleWidth(1.2)
+  .onNodeClick(node => {
+    const dist = 80;
+    const {x,y,z} = node;
+    Graph.cameraPosition({ x:x+dist, y:y+dist, z:z+dist }, node, 2000);
+    showDetails(node);
+  })
+  .onBackgroundClick(() => showDetails(null))
+  .onNodeHover(node => { if (node) showDetails(node); });
+
+let spinning=false;
+document.getElementById('spin').onclick=()=>spinning=!spinning;
+
+function showDetails(node){
+  if (!node){ details.style.display='none'; return; }
+  const props = node.props || {};
+  const rows = Object.entries(props).map(([k,v])=>`<div><b>${k}</b>: ${String(v)}</div>`).join('');
+  detailsContent.innerHTML = `
+    <div style="margin-bottom:6px">
+      <span style="opacity:.75">${node.label}</span><br/>
+      <div style="font-size:15px">${node.name}</div>
+    </div>
+    <hr style="border:0;border-top:1px solid #243045; margin:6px 0">
+    ${rows || '<i>No properties</i>'}
+  `;
+  details.style.display='block';
+}
+
+function render(graph){
+  const deg = {};
+  graph.links.forEach(l => {deg[l.source]=(deg[l.source]||0)+1;deg[l.target]=(deg[l.target]||0)+1});
+  const sm = document.getElementById('sizeMetric').value;
+  graph.nodes.forEach(n => {
+    const m = sm==='degree' ? (deg[n.id]||1) : (n.metric||1);
+    n.color = colorByLabel(n.label);
+    n.val = 2 + Math.log2(1 + m);
+  });
+  Graph.graphData(graph).nodeColor(n=>n.color).d3Force('link').strength(+linkStrength.value);
+  (function animate(){ if(spinning){const c=Graph.camera(); c.position.x += 0.1; c.lookAt(Graph.scene().position);} requestAnimationFrame(animate);} )();
+}
+
+async function load(){
+  const mode = modeSel.value;
+  const ft = focusSel.value;
+  const fv = focusInp.value.trim();
+  const url = new URL(`/graph`, window.location.origin);
+  url.searchParams.set('mode', mode);
+  url.searchParams.set('limit', '1000');
+  if (ft) { url.searchParams.set('focusType', ft); if (fv) url.searchParams.set('focus', fv); }
+  const res = await fetch(url);
+  render(await res.json());
+}
+
+ async function explain() {
+    const mode = modeSel.value;
+    const ft = document.getElementById('focusType').value;
+    const fv = document.getElementById('focus').value.trim();
+    const url = new URL(`/summary`, window.location.origin);
+    url.searchParams.set('mode', mode);
+    url.searchParams.set('limit', '1000');
+    if (ft) { url.searchParams.set('focusType', ft); if (fv) url.searchParams.set('focus', fv); }
+    const text = await (await fetch(url)).text();
+    summaryContent.textContent = text || '(no summary)';
+    summaryEl.style.display = 'block';
+  }
+
+  document.getElementById('explain').onclick = explain;
+document.getElementById('reload').onclick = load;
+modeSel.onchange = ()=>{ setFocusOptions(); load(); };
+document.getElementById('linkStrength').oninput = ()=> Graph.d3Force('link').strength(+linkStrength.value);
+
+load();
+</script>
+</body>
+</html>

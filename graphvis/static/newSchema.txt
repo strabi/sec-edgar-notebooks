@@ -1,0 +1,38 @@
+##Node labels:
+*(3,303)
+Chunk
+Company
+Form
+Manager
+RailwayMarker
+
+##Relationship types
+*(7,270)
+FILED
+NEXT
+OWNS_STOCK_IN
+PART_OF
+SECTION
+
+##Property keys
+chunkId
+chunkSeqId
+cik
+companyName
+cusip
+cusip6
+f10kItem
+formId
+id
+managerAddress
+managerCik
+managerName
+names
+reportCalendarOrQuarter
+shares
+source
+text
+textEmbedding
+ts
+value
+Connected as
