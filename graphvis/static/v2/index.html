@@ -2,19 +2,23 @@
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>FNV GraphRAG Viz</title>
+  <title>FNV GraphRAG Viz (v2)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <style>
     html,body,#scene{height:100%;margin:0;background:#0a0f1a;color:#cfe6ff;font-family:Inter,system-ui;}
     .panel{position:fixed;top:60px;right:12px;background:#121826cc;border:1px solid #243045;border-radius:12px;padding:12px;backdrop-filter: blur(6px)}
-    .legend{position:fixed;left:12px;top:60px;background:#121826cc;border:1px solid #243045;border-radius:12px;padding:10px}
+  .legend{position:fixed;left:12px;top:60px;background:#121826cc;border:1px solid #243045;border-radius:12px;padding:10px}
+  .legend-list{list-style:none;margin:8px 0 0;padding:0}
+  .legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+  .legend-item:last-child{margin-bottom:0}
+  .legend-dot{display:block;width:12px;height:12px;border-radius:50%}
     select,input,button{background:#0f1624;color:#cfe6ff;border:1px solid #2a3b55;border-radius:8px;padding:6px}
     .switch-banner{position:fixed;top:0;left:0;width:100%;background:#1c2738ee;color:#cfe6ff;padding:8px 0;text-align:center;font-size:14px;z-index:2000}
     .switch-banner a{color:#93c5fd;text-decoration:none;font-weight:600}
   </style>
 </head>
 <body>
-<div class="switch-banner">Switch to <a href="/v2/">v2</a></div>
+<div class="switch-banner"><a href="/">Back to v1</a></div>
 <div id="scene"></div>
 
 <!-- Right controls -->
@@ -55,12 +59,14 @@
 
 <!-- Left legend -->
 <div class="legend">
-  <b>Legend</b><br/>
-  <span style="color:#34d399">Manager</span> •
-  <span style="color:#60a5fa">Company</span> •
-  <span style="color:#fbbf24">Form</span> •
-  <span style="color:#a78bfa">Chunk</span> •
-  <span style="color:#fb7185">RailwayMarker</span>
+  <b>Legend</b>
+  <ul class="legend-list">
+    <li class="legend-item"><span class="legend-dot" style="background:#34d399"></span><span>Manager</span></li>
+    <li class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span><span>Company</span></li>
+    <li class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span><span>Form</span></li>
+    <li class="legend-item"><span class="legend-dot" style="background:#a78bfa"></span><span>Chunk</span></li>
+    <li class="legend-item"><span class="legend-dot" style="background:#fb7185"></span><span>RailwayMarker</span></li>
+  </ul>
 </div>
 
 <!-- Bottom-right summary panel -->
@@ -155,6 +161,7 @@ const Graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('sc
   .onNodeHover(node => { if (node) showDetails(node); });
 
 let spinning=false;
+let animationLoopStarted=false;
 document.getElementById('spin').onclick=()=>spinning=!spinning;
 
 function showDetails(node){
@@ -182,7 +189,20 @@ function render(graph){
     n.val = 2 + Math.log2(1 + m);
   });
   Graph.graphData(graph).nodeColor(n=>n.color).d3Force('link').strength(+linkStrength.value);
-  (function animate(){ if(spinning){const c=Graph.camera(); c.position.x += 0.1; c.lookAt(Graph.scene().position);} requestAnimationFrame(animate);} )();
+  startAnimationLoop();
+}
+
+function startAnimationLoop(){
+  if (animationLoopStarted) return;
+  animationLoopStarted = true;
+  (function animate(){
+    if(spinning){
+      const camera = Graph.camera();
+      camera.position.x += 0.1;
+      camera.lookAt(Graph.scene().position);
+    }
+    requestAnimationFrame(animate);
+  })();
 }
 
 async function load(){
