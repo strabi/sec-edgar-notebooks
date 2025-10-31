@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
+from fastapi.staticfiles import StaticFiles
 from neo4j import GraphDatabase, Driver
 from neo4j.exceptions import AuthError, ServiceUnavailable
 from neo4j.graph import Node, Relationship, Path as NeoPath
@@ -21,6 +22,8 @@ NEO4J_USER = os.getenv("NEO4J_USER")
 NEO4J_PASS = os.getenv("NEO4J_PASSWORD")
 NEO4J_AUTH_RAW = os.getenv("NEO4J_AUTH")
 INDEX_PATH = Path("static/index.html")
+INDEX_V2_PATH = Path("static/v2/index.html")
+INDEX_V2_DIR = INDEX_V2_PATH.parent
 
 
 def _credential_candidates() -> list[Tuple[str, str]]:
@@ -64,12 +67,19 @@ def _create_driver() -> Driver:
 # --- App / Driver ---
 driver = _create_driver()
 app = FastAPI(title="FNV Graph Viz")
-INDEX_HTML = INDEX_PATH.read_text(encoding="utf-8")
+
+app.mount("/v2/css", StaticFiles(directory=INDEX_V2_DIR / "css"), name="v2-css")
+app.mount("/v2/js", StaticFiles(directory=INDEX_V2_DIR / "js"), name="v2-js")
 
 
 @app.get("/", response_class=HTMLResponse)
 def home():
-    return INDEX_HTML
+    return INDEX_PATH.read_text(encoding="utf-8")
+
+
+@app.get("/v2/", response_class=HTMLResponse)
+def home_v2():
+    return INDEX_V2_PATH.read_text(encoding="utf-8")
 
 
 # ---------- Shared helpers ----------
