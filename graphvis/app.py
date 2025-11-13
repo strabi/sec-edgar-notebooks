@@ -34,16 +34,12 @@ def _credential_candidates() -> list[Tuple[str, str]]:
         auth_user, _, auth_pass = NEO4J_AUTH_RAW.partition("/")
         if auth_user and auth_pass:
             candidates.append((auth_user, auth_pass))
-    candidates.extend([
-        ("neo4j", "@Newyork2025"),
-        ("neo4j", "password"),
-        ("neo4j", "test1234"),
-    ])
-    deduped: list[Tuple[str, str]] = []
-    for cred in candidates:
-        if cred not in deduped:
-            deduped.append(cred)
-    return deduped
+    if not candidates:
+        raise ValueError(
+            "Neo4j credentials not found. Set NEO4J_USER and NEO4J_PASSWORD "
+            "environment variables, or set NEO4J_AUTH in format 'user/password'"
+        )
+    return candidates
 
 
 def _create_driver() -> Driver:

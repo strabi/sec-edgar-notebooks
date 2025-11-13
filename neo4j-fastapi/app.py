@@ -9,8 +9,11 @@ from neo4j import GraphDatabase, basic_auth
 APP_NAME = "neo4j-fastapi"
 BOLT_URL = os.environ.get("NEO4J_BOLT_URL", "bolt://localhost:7687")
 NEO4J_USER = os.environ.get("NEO4J_USER", "neo4j")
-NEO4J_PASSWORD = os.environ.get("NEO4J_PASSWORD", "@Newyork2025")
+NEO4J_PASSWORD = os.environ.get("NEO4J_PASSWORD")
 MAX_ROWS = int(os.environ.get("MAX_ROWS", "1000"))
+
+if not NEO4J_PASSWORD:
+    raise ValueError("NEO4J_PASSWORD environment variable is required")
 
 app = FastAPI(title="Neo4j Cypher API", version="0.1.0")
 
